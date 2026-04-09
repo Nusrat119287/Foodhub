@@ -1,0 +1,90 @@
+@model Turbo_Food_Main.ViewModels.FoodReviewPageViewModel
+@{
+    ViewData["Title"] = "Food Review";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>Food Review Page</h3>
+        <a asp-action="Search" class="btn btn-outline-primary">Back to Menu</a>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+    {
+        <div class="alert alert-info">@Model.StatusMessage</div>
+    }
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header fw-bold">Add Your Review</div>
+        <div class="card-body">
+            <form asp-action="AddReview" method="post" class="row g-2">
+                @Html.AntiForgeryToken()
+                <div class="col-md-5">
+                    <label class="form-label">Food Item</label>
+                    <select class="form-select" name="menuItemId" required>
+                        <option value="">Select food item</option>
+                        @foreach (var item in Model.MenuItems)
+                        {
+                            <option value="@item.ItemId">@item.Name (@item.Category)</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Rating</label>
+                    <select class="form-select" name="rating" required>
+                        <option value="5">5</option>
+                        <option value="4">4</option>
+                        <option value="3">3</option>
+                        <option value="2">2</option>
+                        <option value="1">1</option>
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label">Comment</label>
+                    <input class="form-control" name="comment" placeholder="Write your review..." />
+                </div>
+                <div class="col-12">
+                    <button class="btn btn-success">Submit Review</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header fw-bold">Recent Reviews</div>
+        <div class="card-body">
+            @if (!Model.RecentReviews.Any())
+            {
+                <div class="text-muted">No reviews yet.</div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Food</th>
+                                <th>Rating</th>
+                                <th>Comment</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var review in Model.RecentReviews)
+                            {
+                                <tr>
+                                    <td>@review.ItemName</td>
+                                    <td>@review.Rating / 5</td>
+                                    <td>@review.Comment</td>
+                                    <td>@review.CreatedAt.ToLocalTime().ToString("g")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+

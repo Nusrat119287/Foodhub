@@ -1,4 +1,4 @@
-﻿@using Turbo_Food_Main.ViewModels
+@using Turbo_Food_Main.ViewModels
 @model Turbo_Food_Main.ViewModels.ProfileViewModel
 
 @{
@@ -6,39 +6,328 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
+<div id="profileData"
+     data-preferred-cuisines="@string.Join(",", Model.PreferredCuisines ?? Enumerable.Empty<string>())"
+     data-diet-preference="@Model.DietPreference">
+</div>
+
 <div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow-lg border-0 rounded-3">
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card shadow-lg border-0 rounded-3 h-100">
                 <div class="card-header bg-primary text-white text-center rounded-top-3">
                     <h3>@Model.Name's Profile</h3>
                 </div>
-                <div class="card-body text-center">
-
-                    <div class="mb-3 text-start">
+                <div class="card-body">
+                    <div class="mb-3">
                         <label class="form-label fw-bold">Full Name</label>
                         <input type="text" class="form-control" value="@Model.Name" readonly />
                     </div>
 
-                    <div class="mb-3 text-start">
+                    <div class="mb-3">
                         <label class="form-label fw-bold">Email</label>
                         <input type="email" class="form-control" value="@Model.Email" readonly />
                     </div>
 
-                    <div class="mt-4">
+                    <div class="mt-4 d-flex flex-column gap-2">
                         @if (!User.IsInRole("Admin"))
                         {
-                            <a asp-controller="Orders" asp-action="History" class="btn btn-info me-2">
+                            <a asp-controller="Orders" asp-action="History" class="btn btn-info w-100">
                                 My Order History
                             </a>
                         }
 
-                        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary me-2">
+                        <a asp-controller="Food" asp-action="Search" class="btn btn-outline-secondary w-100">
                             Back to Home
                         </a>
                     </div>
                 </div>
             </div>
         </div>
+
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 rounded-3 mb-4">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Food Preferences</h5>
+                    <small class="text-muted">Helps personalize menu suggestions on this device</small>
+                </div>
+                <div class="card-body">
+                    <form asp-controller="Account" asp-action="SavePreferences" method="post" id="preferencesForm">
+                        @Html.AntiForgeryToken()
+
+                        <div class="row">
+                            <div class="col-md-7">
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Preferred Cuisine</label>
+                                    <div id="preferredCuisineGroup" class="d-flex flex-wrap gap-2">
+                                        <button type="button" class="btn btn-sm btn-outline-primary preference-chip" data-value="Indian">Indian</button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary preference-chip" data-value="Asian">Asian</button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary preference-chip" data-value="Fast Food">Fast Food</button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary preference-chip" data-value="South Indian">South Indian</button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary preference-chip" data-value="North Indian">North Indian</button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary preference-chip" data-value="Vegan">Vegan</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Dietary Preference</label>
+                                    <div id="dietPreferenceGroup" class="d-flex flex-column gap-1">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="dietPreference" id="dietVeg" value="Vegetarian" @(Model.DietPreference == "Vegetarian" ? "checked" : "")>
+                                            <label class="form-check-label" for="dietVeg">
+                                                Vegetarian
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="dietPreference" id="dietNonVeg" value="Non-Vegetarian" @(Model.DietPreference == "Non-Vegetarian" ? "checked" : "")>
+                                            <label class="form-check-label" for="dietNonVeg">
+                                                Non-Vegetarian
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="dietPreference" id="dietMixed" value="Mixed / Flexible" @(Model.DietPreference == "Mixed / Flexible" ? "checked" : "")>
+                                            <label class="form-check-label" for="dietMixed">
+                                                Mixed / Flexible
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <input type="hidden" id="preferredCuisinesInput" name="preferredCuisines" />
+
+                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mt-2">
+                            <button type="submit" class="btn btn-success">
+                                Save Preferences
+                            </button>
+                            <small id="preferencesStatus" class="text-muted">
+                                Your preferences are saved securely to your profile and can be changed anytime.
+                            </small>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-0">Feedback & Ratings</h5>
+                        <small class="text-muted">Share your experience and review past items</small>
+                    </div>
+                </div>
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(Model.StatusMessage))
+                    {
+                        <div class="alert alert-info alert-dismissible fade show mb-3" role="alert">
+                            @Model.StatusMessage
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    <div class="row g-4">
+                        <div class="col-md-6 border-end-md">
+                            <h6 class="fw-semibold mb-3">Rate a Food Item</h6>
+                            <form asp-controller="Account" asp-action="AddRating" method="post" id="ratingForm">
+                                @Html.AntiForgeryToken()
+                                <div class="mb-3">
+                                    <label for="ratingItemName" class="form-label">Food item</label>
+                                    <input type="text" id="ratingItemName" name="itemName" class="form-control" placeholder="e.g. Veg Biryani, Masala Dosa" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label d-block">Rating</label>
+                                    <div id="ratingStars" class="rating-stars">
+                                        <span data-value="1" class="star">&#9733;</span>
+                                        <span data-value="2" class="star">&#9733;</span>
+                                        <span data-value="3" class="star">&#9733;</span>
+                                        <span data-value="4" class="star">&#9733;</span>
+                                        <span data-value="5" class="star">&#9733;</span>
+                                    </div>
+                                    <input type="hidden" id="ratingValue" name="rating" value="0" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="ratingComment" class="form-label">Short review (optional)</label>
+                                    <textarea id="ratingComment" name="comment" class="form-control" rows="3" placeholder="What did you like or dislike?"></textarea>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary w-100">
+                                    Submit Feedback
+                                </button>
+                            </form>
+                        </div>
+
+                        <div class="col-md-6">
+                            <h6 class="fw-semibold mb-3">Your Past Feedback</h6>
+                            @if (Model.Ratings == null || !Model.Ratings.Any())
+                            {
+                                <div class="text-muted small">
+                                    You haven't added any feedback yet. Once you rate items, they will appear here so you can quickly review what you liked.
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="list-group small max-vh-40 overflow-auto">
+                                    @foreach (var rating in Model.Ratings)
+                                    {
+                                        var filledStars = new string('★', rating.Rating);
+                                        var emptyStars = new string('☆', 5 - rating.Rating);
+                                        <div class="list-group-item list-group-item-action flex-column align-items-start">
+                                            <div class="d-flex w-100 justify-content-between">
+                                                <h6 class="mb-1">@rating.ItemName</h6>
+                                                <small class="text-warning rating-stars-inline">@filledStars@emptyStars</small>
+                                            </div>
+                                            <p class="mb-1">
+                                                @if (!string.IsNullOrWhiteSpace(rating.Comment))
+                                                {
+                                                    @rating.Comment
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">No comment added.</span>
+                                                }
+                                            </p>
+                                            <small class="text-muted">Rated on @rating.CreatedAt.ToLocalTime().ToString("g")</small>
+                                        </div>
+                                    }
+                                </div>
+                            }
+
+                            <form asp-controller="Account" asp-action="ClearRatings" method="post" class="mt-3">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Clear all your saved feedback? This cannot be undone.');">
+                                    Clear All My Feedback
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        (function () {
+            function initPreferencesUI() {
+                const profileData = document.getElementById('profileData');
+                const initialCuisines = (profileData?.dataset.preferredCuisines || '')
+                    .split(',')
+                    .map(function (c) { return c.trim(); })
+                    .filter(function (c) { return c.length > 0; });
+
+                const cuisineButtons = document.querySelectorAll('#preferredCuisineGroup .preference-chip');
+                cuisineButtons.forEach(btn => {
+                    const value = btn.getAttribute('data-value');
+                    if (initialCuisines.indexOf(value) !== -1) {
+                        btn.classList.add('active');
+                    }
+
+                    btn.addEventListener('click', function () {
+                        this.classList.toggle('active');
+                    });
+                });
+
+                const preferencesForm = document.getElementById('preferencesForm');
+                const hiddenInput = document.getElementById('preferredCuisinesInput');
+                if (preferencesForm && hiddenInput) {
+                    preferencesForm.addEventListener('submit', function () {
+                        const selected = [];
+                        cuisineButtons.forEach(btn => {
+                            if (btn.classList.contains('active')) {
+                                selected.push(btn.getAttribute('data-value'));
+                            }
+                        });
+                        hiddenInput.value = selected.join(',');
+                    });
+                }
+            }
+
+            function initRatingsUI() {
+                const starsContainer = document.getElementById('ratingStars');
+                const ratingValueInput = document.getElementById('ratingValue');
+
+                if (!starsContainer || !ratingValueInput) {
+                    return;
+                }
+
+                let selectedRating = parseInt(ratingValueInput.value || '0', 10);
+
+                function highlightStars(value) {
+                    const stars = starsContainer.querySelectorAll('.star');
+                    stars.forEach(star => {
+                        const starValue = parseInt(star.getAttribute('data-value'), 10);
+                        if (starValue <= value) {
+                            star.classList.add('active');
+                        } else {
+                            star.classList.remove('active');
+                        }
+                    });
+                }
+
+                // Initialize from any existing value
+                highlightStars(selectedRating);
+
+                starsContainer.querySelectorAll('.star').forEach(star => {
+                    star.addEventListener('mouseenter', function () {
+                        const value = parseInt(this.getAttribute('data-value'), 10);
+                        highlightStars(value);
+                    });
+
+                    star.addEventListener('mouseleave', function () {
+                        highlightStars(selectedRating);
+                    });
+
+                    star.addEventListener('click', function () {
+                        selectedRating = parseInt(this.getAttribute('data-value'), 10);
+                        highlightStars(selectedRating);
+                        ratingValueInput.value = selectedRating.toString();
+                    });
+                });
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                initPreferencesUI();
+                initRatingsUI();
+            });
+        })();
+    </script>
+
+    <style>
+        .preference-chip.active {
+            background-color: #0d6efd;
+            color: #fff;
+        }
+
+        .rating-stars {
+            font-size: 1.5rem;
+            color: #ffc107;
+            cursor: pointer;
+            user-select: none;
+        }
+
+            .rating-stars .star {
+                padding: 0 2px;
+                opacity: 0.5;
+                transition: opacity 0.2s ease, transform 0.1s ease;
+            }
+
+            .rating-stars .star.active {
+                opacity: 1;
+                transform: scale(1.05);
+            }
+
+        .rating-stars-inline {
+            letter-spacing: 1px;
+        }
+
+        @@media (min-width: 768px) {
+            .border-end-md {
+                border-right: 1px solid rgba(0, 0, 0, 0.075);
+            }
+        }
+    </style>
+}

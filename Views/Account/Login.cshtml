@@ -56,7 +56,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Password field toggle
+            
             const togglePassword = document.querySelector('#togglePassword');
             const password = document.querySelector('#passwordField');
 
@@ -64,7 +64,7 @@
                 const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
                 password.setAttribute('type', type);
 
-                // Toggle the button text
+                
                 this.textContent = type === 'text' ? 'Hide' : 'Show';
             });
         });
